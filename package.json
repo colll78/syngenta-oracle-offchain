@@ -1,5 +1,5 @@
 {
-  "name": "wst-poc-offchain",
+  "name": "syngenta-oracle-offchain",
   "version": "1.0.0",
   "description": "Off-Chain SDK for WST POC",
   "main": "./dist/index.js",

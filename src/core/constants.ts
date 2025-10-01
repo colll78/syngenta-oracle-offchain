@@ -19,14 +19,9 @@ export const ADA = {
 };
 
 export const REF_SCRIPT_TOKEN_NAMES = {
-    spendProgrammable: "PSpend",
-    globalProgrammable: "GlobalPSpend",
-    mintDiretory: "MintDirectory",
-    spendDirectory: "SpendDirectory",
+    spendSyngentaOracle: "PSpendSyngentaOracle",
+    mintSyngentaOracle: "PMintSyngentaOracle",
 };
 
-export const PROTOCOL_PARAMS_TOKEN_NAME = fromText("ProtocolParams");
+export const SYNGENTA_ORACLE_TOKEN_NAME = fromText("SyngentaOracle");
 
-export const DIRECTORY_HEAD_KEY = "";
-
-export const DIRECTORY_TAIL_KEY = "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff";

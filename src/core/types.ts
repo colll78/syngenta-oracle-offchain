@@ -104,3 +104,10 @@ type RedeemerBuilderGeneral = {
 } 
 
 export type UTxOSelectionCriteria = (utxo: UTxO) => boolean;
+
+export type MultiValidator = {
+  spendValidator: SpendingValidator;
+  spendValAddress: Address;
+  mintValidator: MintingPolicy;
+  mintValAddress: Address;
+};

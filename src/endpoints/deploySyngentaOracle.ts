@@ -18,7 +18,7 @@ import {
   validatorToScriptHash,
   WithdrawalValidator,
 } from "@lucid-evolution/lucid";
-import { DeploySyngentaOracleConfig, PROTOCOL_PARAMS_TOKEN_NAME, DeploySyngentaOracleResult, ProtocolParametersDatum, SyngentaOracleData, SyngentaOracleSignature } from "../core/index.js";
+import { DeploySyngentaOracleConfig, SYNGENTA_ORACLE_TOKEN_NAME, DeploySyngentaOracleResult, SyngentaOracleData, SyngentaOracleSignature } from "../core/index.js";
 import { Effect } from "effect";
 
 
@@ -29,8 +29,8 @@ export const getSignedOracleMessage = (lucid: LucidEvolution, config: SyngentaOr
     );
      
     const {farmerId, farmId, aeId, farmArea, farmBorders, sustainabilityIndex, additionalData} : SyngentaOracleData = config;
-    const protocolParametersDatum = [farmerId, farmId, aeId, BigInt(farmArea), farmBorders, BigInt(sustainabilityIndex), additionalData]
-    const paramDatum = Data.to<Data>(protocolParametersDatum)
+    const syngentaOracleDatum = [farmerId, farmId, aeId, BigInt(farmArea), farmBorders, BigInt(sustainabilityIndex), additionalData]
+    const paramDatum = Data.to<Data>(syngentaOracleDatum)
 
     const signedOracleMessage: SignedMessage = yield* Effect.promise(() =>
       lucid.wallet().signMessage(userAddress, paramDatum)
@@ -61,11 +61,11 @@ export const deploySyngentaOracle = (
     
     const initProtocolParamsOutRef = new Constr(0, [String(config.initSyngentaOracleUTxO.txHash), BigInt(config.initSyngentaOracleUTxO.outputIndex)]);
 
-    const protocolParamsScript = applyParamsToScript(config.scripts.syngentaOracleMinting, [initProtocolParamsOutRef])
+    const syngentaOracleScript = applyParamsToScript(config.scripts.syngentaOracleMinting, [initProtocolParamsOutRef])
 
     const protocolParametersMinting: MintingPolicy = {
       type: "PlutusV3",
-      script: protocolParamsScript,
+      script: syngentaOracleScript,
     };
     const protocolParamsPolicyId = mintingPolicyToId(protocolParametersMinting);
 
@@ -79,14 +79,13 @@ export const deploySyngentaOracle = (
       alwaysFails,
     );
 
-    const protocolParamsNFT = toUnit(protocolParamsPolicyId, PROTOCOL_PARAMS_TOKEN_NAME)
-    //console.log("protocolParamsNFT: " + protocolParamsNFT)
+    const syngentaOracleNFT = toUnit(protocolParamsPolicyId, SYNGENTA_ORACLE_TOKEN_NAME)
    
-    const protocolParamsSpending : SpendingValidator = {
+    const syngentaOracleSpending : SpendingValidator = {
       type: "PlutusV3",
-      script: protocolParamsScript
+      script: syngentaOracleScript
     }
-    const protocolParamsSpendingAddr = validatorToAddress(network!, protocolParamsSpending)
+    const syngentaOracleSpendingAddr = validatorToAddress(network!, syngentaOracleSpending)
     // data SyngentaOracleData = SyngentaOracleData
     //   { farmerId           :: BuiltinByteString
     //   , farmId             :: BuiltinByteString
@@ -97,23 +96,23 @@ export const deploySyngentaOracle = (
     //   , additionalData     :: BuiltinData        -- BuiltinData blob
     //   }
     const {farmerId, farmId, aeId, farmArea, farmBorders, sustainabilityIndex, additionalData} : SyngentaOracleData = config.syngentaOracleData;
-    const protocolParametersDatum = [farmerId, farmId, aeId, BigInt(farmArea), farmBorders, BigInt(sustainabilityIndex), additionalData]
+    const syngentaOracleDatum = [farmerId, farmId, aeId, BigInt(farmArea), farmBorders, BigInt(sustainabilityIndex), additionalData]
     const scripts = { 
       syngentaOracleMinting: protocolParametersMinting,
-      syngentaOracleSpending: protocolParamsSpending
+      syngentaOracleSpending: syngentaOracleSpending
     }
 
-    const paramDatum = Data.to<Data>(protocolParametersDatum)
-    const mintedAssets : Assets = { [protocolParamsNFT]: 1n }
+    const paramDatum = Data.to<Data>(syngentaOracleDatum)
+    const mintedAssets : Assets = { [syngentaOracleNFT]: 1n }
     
     const tx = yield* lucid
       .newTx()
       .collectFrom([config.initSyngentaOracleUTxO])
-      .pay.ToContract(protocolParamsSpendingAddr, {
+      .pay.ToContract(syngentaOracleSpendingAddr, {
         kind: "inline",
         value: paramDatum,
       }, {
-        [protocolParamsNFT]: 1n,
+        [syngentaOracleNFT]: 1n,
       })
       .mintAssets(mintedAssets, Data.void())
       .attach.MintingPolicy(protocolParametersMinting)

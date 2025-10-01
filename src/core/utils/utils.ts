@@ -420,7 +420,7 @@ export const utxosAtAddressWithPolicyId = async (
   });
 }
 
-export const sortUTxOs = (utxos: UTxO[]) : UTxO[] => {
+export const sortUtxosByOutRef = (utxos: UTxO[]) : UTxO[] => {
   return utxos.sort((utxoA, utxoB) => {
     if (utxoA.txHash > utxoB.txHash) {
       return 1;
@@ -460,12 +460,12 @@ export const makeTransferRedeemer = ({
   outputSelectionCriteria,
   makeRedeemer,
 }: MakeTransferRedeemerParams) : Redeemer => {
-  const sortedRefInputs = sortUTxOs(referenceInputs);
+  const sortedRefInputs = sortUtxosByOutRef(referenceInputs);
   const indicesOfSortedRefInputs: [UTxO, bigint][] = sortedRefInputs.map((input) => [input, BigInt(referenceInputs.findIndex((inputToFind) => input == inputToFind))]);
   
   let selectedInputIdxs : any = undefined;
   if (inputSelectionCriteria && inputs) {
-    const sortedInputs = sortUTxOs(inputs);
+    const sortedInputs = sortUtxosByOutRef(inputs);
     const indicesOfSortedInputs : [UTxO, bigint][] = sortedInputs.map((input) => [input, BigInt(inputs.findIndex((inputToFind) => input == inputToFind))]);
     let selectedInputIndices : bigint[] = []
     for(const [input, index] of indicesOfSortedInputs){
