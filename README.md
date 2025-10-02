@@ -167,3 +167,9 @@ pnpm test
 
 - Both APIs are Effect programs; use `Effect.runPromise(...)` (or your preferred `Effect` runtime) to execute.
 - Ensure your wallet is selected in `LucidEvolution` before calling these functions.
+
+### Preprod Integration Tests:
+
+Deploy oracle transaction ID: 
+  246936866d55eabd1b8b42665a2dc27448e3847ad709279960c41fb36b9bda77
+  https://preprod.cexplorer.io/tx/246936866d55eabd1b8b42665a2dc27448e3847ad709279960c41fb36b9bda77?tab=content

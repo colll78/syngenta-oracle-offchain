@@ -61,7 +61,7 @@ export const deploySyngentaOracle = (
     
     const initProtocolParamsOutRef = new Constr(0, [String(config.initSyngentaOracleUTxO.txHash), BigInt(config.initSyngentaOracleUTxO.outputIndex)]);
 
-    const syngentaOracleScript = applyParamsToScript(config.scripts.syngentaOracleMinting, [initProtocolParamsOutRef])
+    const syngentaOracleScript = applyParamsToScript(config.scripts.syngentaOracleMinting, [paymentCredential.hash])
 
     const protocolParametersMinting: MintingPolicy = {
       type: "PlutusV3",
@@ -116,6 +116,7 @@ export const deploySyngentaOracle = (
       })
       .mintAssets(mintedAssets, Data.void())
       .attach.MintingPolicy(protocolParametersMinting)
+      .addSignerKey(paymentCredential.hash)
       .completeProgram();
       //.completeProgram({localUPLCEval: false});
     
