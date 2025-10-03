@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { Effect } from "effect";
 import { LucidContext, makeBlockfrostContext, makeEmulatorContext } from "./service/lucidContext.js";
-import { Address, Credential, applyParamsToScript, deploySyngentaOracle, MintingPolicy, paymentCredentialOf, PolicyId, SpendingValidator, UTxO, WithdrawalValidator, Validator, mintingPolicyToId, unixTimeToSlot, scriptFromNative, Constr, validatorToScriptHash, fromText, Assets, toUnit, Unit, validatorToAddress, validatorToRewardAddress, utxosAtAddressWithPolicyId, UTxOSelectionCriteria, ScriptHash, deployRefscripts, DeploySyngentaOracleResult, DeploySyngentaOracleConfig, SyngentaOracleData, Data, generateSeedPhrase, generateAccountSeedPhrase, getSignedOracleMessage } from "../src/index.js";
+import { Address, Credential, applyParamsToScript, deploySyngentaOracle, MintingPolicy, paymentCredentialOf, PolicyId, SpendingValidator, UTxO, WithdrawalValidator, Validator, mintingPolicyToId, unixTimeToSlot, scriptFromNative, Constr, validatorToScriptHash, fromText, Assets, toUnit, Unit, validatorToAddress, validatorToRewardAddress, utxosAtAddressWithPolicyId, UTxOSelectionCriteria, ScriptHash, deployRefscripts, DeploySyngentaOracleResult, DeploySyngentaOracleConfig, SyngentaOracleData, Data, generateSeedPhrase, generateAccountSeedPhrase, getSignedOracleMessage, SyngentaOracleSignature } from "../src/index.js";
 import { alwaysFailsBytes, syngentaOracleMintingBytes, syngentaOracleSpendingBytes } from "./common/constants.js";
 
 test<LucidContext>("Test 10 - Deploy Syngenta Oracle", async () => {
@@ -81,6 +81,6 @@ test<LucidContext>("Test 10 - Deploy Syngenta Oracle", async () => {
         farmArea: 100,
         farmBorders: "1234567890",
     }
-    const signedOracleMessage = await Effect.runPromise(getSignedOracleMessage(lucid, syngentaOracleData));
-    console.log("Signed Oracle Message: " + signedOracleMessage);
+    const signedOracleMessage : SyngentaOracleSignature = await Effect.runPromise(getSignedOracleMessage(lucid, syngentaOracleData));
+    console.log("Signed Oracle Message: " + signedOracleMessage.signedOracleMessage.signature);
 });

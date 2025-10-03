@@ -8,6 +8,7 @@ import {
   LucidEvolution,
   MintingPolicy,
   mintingPolicyToId,
+  PolicyId,
   RedeemerBuilder,
   SignedMessage,
   SpendingValidator,
@@ -18,7 +19,7 @@ import {
   validatorToScriptHash,
   WithdrawalValidator,
 } from "@lucid-evolution/lucid";
-import { DeploySyngentaOracleConfig, SYNGENTA_ORACLE_TOKEN_NAME, DeploySyngentaOracleResult, SyngentaOracleData, SyngentaOracleSignature } from "../core/index.js";
+import { DeploySyngentaOracleConfig, SYNGENTA_ORACLE_TOKEN_NAME, DeploySyngentaOracleResult, SyngentaOracleData, SyngentaOracleSignature, UpdateSyngentaOracleConfig, UpdateSyngentaOracleResult } from "../core/index.js";
 import { Effect } from "effect";
 
 
@@ -63,23 +64,18 @@ export const deploySyngentaOracle = (
 
     const syngentaOracleScript = applyParamsToScript(config.scripts.syngentaOracleMinting, [paymentCredential.hash])
 
-    const protocolParametersMinting: MintingPolicy = {
+    const syngentaOracleMinting: MintingPolicy = {
       type: "PlutusV3",
       script: syngentaOracleScript,
     };
-    const protocolParamsPolicyId = mintingPolicyToId(protocolParametersMinting);
+    const syngentaOraclePolicyId = mintingPolicyToId(syngentaOracleMinting);
 
     const alwaysFails: SpendingValidator = {
       type: "PlutusV3",
       script: applyParamsToScript(config.scripts.alwaysFails, [55n]),
     };
 
-    const alwaysFailsAddr = validatorToAddress(
-      network!,
-      alwaysFails,
-    );
-
-    const syngentaOracleNFT = toUnit(protocolParamsPolicyId, SYNGENTA_ORACLE_TOKEN_NAME)
+    const syngentaOracleNFT = toUnit(syngentaOraclePolicyId, SYNGENTA_ORACLE_TOKEN_NAME)
    
     const syngentaOracleSpending : SpendingValidator = {
       type: "PlutusV3",
@@ -98,7 +94,7 @@ export const deploySyngentaOracle = (
     const {farmerId, farmId, aeId, farmArea, farmBorders, sustainabilityIndex, additionalData} : SyngentaOracleData = config.syngentaOracleData;
     const syngentaOracleDatum = [farmerId, farmId, aeId, BigInt(farmArea), farmBorders, BigInt(sustainabilityIndex), additionalData]
     const scripts = { 
-      syngentaOracleMinting: protocolParametersMinting,
+      syngentaOracleMinting: syngentaOracleMinting,
       syngentaOracleSpending: syngentaOracleSpending
     }
 
@@ -115,10 +111,68 @@ export const deploySyngentaOracle = (
         [syngentaOracleNFT]: 1n,
       })
       .mintAssets(mintedAssets, Data.void())
-      .attach.MintingPolicy(protocolParametersMinting)
+      .attach.MintingPolicy(syngentaOracleMinting)
       .addSignerKey(paymentCredential.hash)
       .completeProgram();
       //.completeProgram({localUPLCEval: false});
     
-    return {tx: tx, syngentaOraclePolicyId: protocolParamsPolicyId, scripts};
+    return {tx: tx, syngentaOraclePolicyId: syngentaOraclePolicyId, scripts};
   });
+
+
+  export const updateSyngentaOracle = (
+    lucid: LucidEvolution,
+    config: UpdateSyngentaOracleConfig,
+  ): Effect.Effect<UpdateSyngentaOracleResult, TransactionError, never> =>
+    Effect.gen(function* () { // return type ,
+      const network = lucid.config().network;
+      const userAddress: Address = yield* Effect.promise(() =>
+        lucid.wallet().address()
+      );
+  
+      const { paymentCredential } = getAddressDetails(userAddress);
+      if (!paymentCredential) {
+          throw new Error("Payment credential is undefined");
+      }
+        
+      const syngentaOraclePolicyId : PolicyId = mintingPolicyToId(config.scripts.syngentaOracleMinting);
+  
+      const syngentaOracleNFT = toUnit(syngentaOraclePolicyId, SYNGENTA_ORACLE_TOKEN_NAME)
+     
+      const syngentaOracleSpending : SpendingValidator = config.scripts.syngentaOracleSpending
+      
+      const syngentaOracleSpendingAddr = validatorToAddress(network!, syngentaOracleSpending)
+
+      const [oracleUTxO, ...rest] = yield* Effect.promise(() => lucid.utxosAtWithUnit(syngentaOracleSpendingAddr, syngentaOracleNFT))
+      // data SyngentaOracleData = SyngentaOracleData
+      //   { farmerId           :: BuiltinByteString
+      //   , farmId             :: BuiltinByteString
+      //   , aeId               :: BuiltinByteString
+      //   , farmArea           :: Integer            -- fixed‑point (e.g., area * 10^2)
+      //   , farmBorders        :: BuiltinByteString  -- IPFS hash
+      //   , sustainabilityIndex:: Integer            -- 0..100
+      //   , additionalData     :: BuiltinData        -- BuiltinData blob
+      //   }
+      const {farmerId, farmId, aeId, farmArea, farmBorders, sustainabilityIndex, additionalData} : SyngentaOracleData = config.syngentaOracleData;
+      const syngentaOracleDatum = [farmerId, farmId, aeId, BigInt(farmArea), farmBorders, BigInt(sustainabilityIndex), additionalData]
+  
+      const paramDatum = Data.to<Data>(syngentaOracleDatum)
+      
+      const tx = yield* lucid
+        .newTx()
+        .collectFrom([oracleUTxO])
+        .pay.ToContract(syngentaOracleSpendingAddr, {
+          kind: "inline",
+          value: paramDatum,
+        }, {
+          [syngentaOracleNFT]: 1n,
+        })
+        .addSignerKey(paymentCredential.hash)
+        .attach.SpendingValidator(config.scripts.syngentaOracleSpending)
+        .completeProgram();
+        //.completeProgram({localUPLCEval: false});
+      
+      return {tx: tx};
+    });
+
+    

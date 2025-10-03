@@ -85,8 +85,8 @@ export type DeploySyngentaOracleResult = {
   }
 };
 
-export type UpdateSyngentaOracle = {
-  tx: TxSignBuilder;
+export type UpdateSyngentaOracleConfig = {
+  newSyngentaOracleData: SyngentaOracleData;
   syngentaOraclePolicyId: PolicyId;
   scripts: {
     syngentaOracleMinting : MintingPolicy;
