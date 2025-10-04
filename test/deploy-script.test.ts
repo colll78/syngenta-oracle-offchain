@@ -1,10 +1,14 @@
 import { expect, test } from "vitest";
 import { Effect } from "effect";
 import { LucidContext, makeBlockfrostContext, makeEmulatorContext } from "./service/lucidContext.js";
-import { Address, Credential, applyParamsToScript, deploySyngentaOracle, MintingPolicy, paymentCredentialOf, PolicyId, SpendingValidator, UTxO, WithdrawalValidator, Validator, mintingPolicyToId, unixTimeToSlot, scriptFromNative, Constr, validatorToScriptHash, fromText, Assets, toUnit, Unit, validatorToAddress, validatorToRewardAddress, utxosAtAddressWithPolicyId, UTxOSelectionCriteria, ScriptHash, deployRefscripts, DeploySyngentaOracleResult, DeploySyngentaOracleConfig, SyngentaOracleData, Data, generateSeedPhrase, generateAccountSeedPhrase, getSignedOracleMessage, SyngentaOracleSignature } from "../src/index.js";
+import { Address, Credential, applyParamsToScript, deploySyngentaOracle, updateSyngentaOracle, MintingPolicy, paymentCredentialOf, PolicyId, SpendingValidator, UTxO, WithdrawalValidator, Validator, mintingPolicyToId, unixTimeToSlot, scriptFromNative, Constr, validatorToScriptHash, fromText, Assets, toUnit, Unit, validatorToAddress, validatorToRewardAddress, utxosAtAddressWithPolicyId, UTxOSelectionCriteria, ScriptHash, DeploySyngentaOracleResult, DeploySyngentaOracleConfig, SyngentaOracleData, Data, generateSeedPhrase, generateAccountSeedPhrase, getSignedOracleMessage, SyngentaOracleSignature } from "../src/index.js";
 import { alwaysFailsBytes, syngentaOracleMintingBytes, syngentaOracleSpendingBytes } from "./common/constants.js";
 
-test<LucidContext>("Test 10 - Deploy Syngenta Oracle", async () => {
+/*
+Test 1 - Deploy Syngenta Oracle
+- Deploy a new Syngenta Oracle feed with initial data.
+*/
+test<LucidContext>("Test 1 - Deploy Syngenta Oracle", async () => {
     const  { lucid, users, emulator } = await Effect.runPromise(makeBlockfrostContext("Preprod"));
     lucid.selectWallet.fromSeed(users.operatorAccount1.seedPhrase);
     const operatorAccount1Address: Address = await lucid.wallet().address();
@@ -69,7 +73,12 @@ test<LucidContext>("Test 10 - Deploy Syngenta Oracle", async () => {
     expect(syngentaOracleSpend).toBeDefined();
 });
 
-test<LucidContext>("Test 10 - Deploy Syngenta Oracle", async () => {
+/*
+Test 2 - Get Signed Oracle Message
+- Sign an oracle data payload with the Syngenta Oracle credential. 
+- Return the signed oracle data payload which can be consumed by smart contracts to read the certified oracle data.
+*/
+test<LucidContext>("Test 2 - Get Signed Oracle Message", async () => {
     const  { lucid, users } = await Effect.runPromise(makeEmulatorContext());
     lucid.selectWallet.fromSeed(users.operatorAccount1.seedPhrase);
     const syngentaOracleData : SyngentaOracleData = {
@@ -83,4 +92,106 @@ test<LucidContext>("Test 10 - Deploy Syngenta Oracle", async () => {
     }
     const signedOracleMessage : SyngentaOracleSignature = await Effect.runPromise(getSignedOracleMessage(lucid, syngentaOracleData));
     console.log("Signed Oracle Message: " + signedOracleMessage.signedOracleMessage.signature);
+});
+
+/*
+Test 3 - Update Syngenta Oracle (Emulator)
+- Update an existing Syngenta Oracle feed with new data.
+*/
+test<LucidContext>("Test 3 - Update Syngenta Oracle (Emulator)", async () => {
+    const  { lucid, users, emulator } = await Effect.runPromise(makeEmulatorContext());
+    lucid.selectWallet.fromSeed(users.operatorAccount1.seedPhrase);
+
+    // Prepare initial oracle data
+    const initialData : SyngentaOracleData = {
+        farmerId: "1234567890",
+        farmId: "1234567890",
+        aeId: "1234567890",
+        sustainabilityIndex: 100,
+        additionalData: Data.void(),
+        farmArea: 100,
+        farmBorders: "1234567890",
+    };
+
+    // Use an existing wallet UTxO to bootstrap deployment
+    const operatorAccountUTxOs = await lucid.wallet().getUtxos();
+    const initSyngentaOracleUTxO : UTxO = operatorAccountUTxOs[0];
+
+    // Deploy the oracle in the emulator first
+    const deployConfig : DeploySyngentaOracleConfig = {
+        initSyngentaOracleUTxO: initSyngentaOracleUTxO,
+        syngentaOracleData: initialData,
+        scripts: {
+            syngentaOracleMinting: syngentaOracleMintingBytes,
+            syngentaOracleSpending: syngentaOracleSpendingBytes,
+            alwaysFails: alwaysFailsBytes
+        }
+    };
+
+    const deployProgram = Effect.gen(function* ($) {
+        const res : DeploySyngentaOracleResult = yield* deploySyngentaOracle(lucid, deployConfig);
+        const tx = res.tx;
+        const txSigned = yield* Effect.promise(() =>
+            tx.sign.withWallet().complete()
+        );
+        const txHash = yield* Effect.promise(() =>
+            txSigned.submit()
+        );
+        if (emulator) {
+            yield* Effect.promise(() =>
+                emulator.awaitTx(txHash)
+            );
+        } else {
+            yield* Effect.promise(() =>
+                lucid.awaitTx(txHash)
+            );
+        }
+        return res;
+    });
+
+    const deployed = await Effect.runPromise(deployProgram);
+
+    // Prepare new oracle data for update
+    const newData : SyngentaOracleData = {
+        farmerId: "1234567890",
+        farmId: "1234567890",
+        aeId: "1234567890",
+        sustainabilityIndex: 90,
+        additionalData: Data.void(),
+        farmArea: 110,
+        farmBorders: "0987654321",
+    };
+
+    // Perform update
+    const updateProgram = Effect.gen(function* ($) {
+        const updateRes = yield* updateSyngentaOracle(lucid, {
+            // Note: runtime expects `syngentaOracleData` here
+            syngentaOracleData: newData,
+            scripts: {
+                syngentaOracleMinting: deployed.scripts.syngentaOracleMinting,
+                syngentaOracleSpending: deployed.scripts.syngentaOracleSpending as unknown as SpendingValidator,
+            }
+        } as any);
+
+        const upTx = updateRes.tx;
+        const upTxSigned = yield* Effect.promise(() =>
+            upTx.sign.withWallet().complete()
+        );
+        const upTxHash = yield* Effect.promise(() =>
+            upTxSigned.submit()
+        );
+        if (emulator) {
+            yield* Effect.promise(() =>
+                emulator.awaitTx(upTxHash)
+            );
+        } else {
+            yield* Effect.promise(() =>
+                lucid.awaitTx(upTxHash)
+            );
+        }
+        return updateRes;
+    });
+
+    const updated = await Effect.runPromise(updateProgram);
+    expect(updated.tx).toBeDefined();
 });

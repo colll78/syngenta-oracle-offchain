@@ -160,7 +160,7 @@ export const deploySyngentaOracle = (
       
       const tx = yield* lucid
         .newTx()
-        .collectFrom([oracleUTxO])
+        .collectFrom([oracleUTxO], Data.void())
         .pay.ToContract(syngentaOracleSpendingAddr, {
           kind: "inline",
           value: paramDatum,
