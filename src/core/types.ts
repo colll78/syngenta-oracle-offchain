@@ -86,12 +86,16 @@ export type DeploySyngentaOracleResult = {
 };
 
 export type UpdateSyngentaOracleConfig = {
+  farmIdToUpdate: string;
   newSyngentaOracleData: SyngentaOracleData;
-  syngentaOraclePolicyId: PolicyId;
   scripts: {
     syngentaOracleMinting : MintingPolicy;
     syngentaOracleSpending: SpendingValidator;
   }
+};
+
+export type UpdateSyngentaOracleResult = {
+  tx: TxSignBuilder;
 };
 
 type RedeemerBuilderGeneral = {

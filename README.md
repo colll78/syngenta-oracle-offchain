@@ -18,11 +18,12 @@ pnpm add @lucid-evolution/lucid effect
 
 - `getSignedOracleMessage`
 - `deploySyngentaOracle`
+- `updateSyngentaOracle`
 
 Import from the package root:
 
 ```ts
-import { getSignedOracleMessage, deploySyngentaOracle } from "syngenta-oracle-offchain";
+import { getSignedOracleMessage, deploySyngentaOracle, updateSyngentaOracle } from "syngenta-oracle-offchain";
 ```
 
 ### Types
@@ -30,9 +31,7 @@ import { getSignedOracleMessage, deploySyngentaOracle } from "syngenta-oracle-of
 Key types used by the API (importable from the package as well):
 
 ```ts
-import type { SyngentaOracleData, SyngentaOracleSignature, DeploySyngentaOracleConfig, DeploySyngentaOra >
-
-  cleResult } from "syngenta-oracle-offchain";
+import type { SyngentaOracleData, SyngentaOracleSignature, DeploySyngentaOracleConfig, DeploySyngentaOracleResult, UpdateSyngentaOracleConfig, UpdateSyngentaOracleResult } from "syngenta-oracle-offchain";
 ```
 
 - `SyngentaOracleData`:
@@ -57,6 +56,14 @@ import type { SyngentaOracleData, SyngentaOracleSignature, DeploySyngentaOracleC
   - `tx: TxSignBuilder`
   - `syngentaOraclePolicyId: PolicyId`
   - `scripts: { syngentaOracleMinting: MintingPolicy; syngentaOracleSpending: WithdrawalValidator }`
+
+- `UpdateSyngentaOracleConfig`:
+  - `farmIdToUpdate: string`
+  - `newSyngentaOracleData: SyngentaOracleData`
+  - `scripts: { syngentaOracleMinting: MintingPolicy; syngentaOracleSpending: SpendingValidator }`
+
+- `UpdateSyngentaOracleResult`:
+  - `tx: TxSignBuilder`
 
 ### Lucid Evolution setup
 
@@ -150,6 +157,51 @@ const config = {
 
 const effect = deploySyngentaOracle(lucid, config);
 const { tx, syngentaOraclePolicyId, scripts } = await Effect.runPromise(effect);
+
+// Sign and submit
+const signed = await tx.sign.withWallet().completeProgram();
+const txHash = await signed.submit();
+```
+
+### updateSyngentaOracle
+
+Updates an existing Syngenta Oracle by collecting the current oracle UTxO and re-locking it with updated data. This function allows you to modify the oracle data for a specific farm.
+
+Signature:
+
+```ts
+declare function updateSyngentaOracle(
+  lucid: LucidEvolution,
+  config: UpdateSyngentaOracleConfig
+): Effect.Effect<UpdateSyngentaOracleResult, TransactionError>;
+```
+
+Usage:
+
+```ts
+import { Data } from "@lucid-evolution/lucid";
+import { Effect } from "effect";
+import { updateSyngentaOracle } from "syngenta-oracle-offchain";
+
+const config = {
+  farmIdToUpdate: "farm-456", // The farm ID to update
+  newSyngentaOracleData: {
+    farmerId: "farmer-123",
+    farmId: "farm-456",
+    aeId: "ae-789",
+    farmArea: 15000, // Updated area
+    farmBorders: "ipfs://...", // Updated borders
+    sustainabilityIndex: 92, // Updated sustainability index
+    additionalData: Data.void(),
+  },
+  scripts: {
+    syngentaOracleMinting: deployedScripts.syngentaOracleMinting, // From deploySyngentaOracle result
+    syngentaOracleSpending: deployedScripts.syngentaOracleSpending, // From deploySyngentaOracle result
+  }
+} as const;
+
+const effect = updateSyngentaOracle(lucid, config);
+const { tx } = await Effect.runPromise(effect);
 
 // Sign and submit
 const signed = await tx.sign.withWallet().completeProgram();

@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { Effect } from "effect";
 import { LucidContext, makeBlockfrostContext, makeEmulatorContext } from "./service/lucidContext.js";
-import { Address, Credential, applyParamsToScript, deploySyngentaOracle, updateSyngentaOracle, MintingPolicy, paymentCredentialOf, PolicyId, SpendingValidator, UTxO, WithdrawalValidator, Validator, mintingPolicyToId, unixTimeToSlot, scriptFromNative, Constr, validatorToScriptHash, fromText, Assets, toUnit, Unit, validatorToAddress, validatorToRewardAddress, utxosAtAddressWithPolicyId, UTxOSelectionCriteria, ScriptHash, DeploySyngentaOracleResult, DeploySyngentaOracleConfig, SyngentaOracleData, Data, generateSeedPhrase, generateAccountSeedPhrase, getSignedOracleMessage, SyngentaOracleSignature } from "../src/index.js";
+import { Address, Credential, applyParamsToScript, deploySyngentaOracle, updateSyngentaOracle, MintingPolicy, paymentCredentialOf, PolicyId, SpendingValidator, UTxO, Constr, validatorToScriptHash, ScriptHash, DeploySyngentaOracleResult, DeploySyngentaOracleConfig, SyngentaOracleData, Data, getSignedOracleMessage, SyngentaOracleSignature } from "../src/index.js";
 import { alwaysFailsBytes, syngentaOracleMintingBytes, syngentaOracleSpendingBytes } from "./common/constants.js";
 
 /*
@@ -165,8 +165,8 @@ test<LucidContext>("Test 3 - Update Syngenta Oracle (Emulator)", async () => {
     // Perform update
     const updateProgram = Effect.gen(function* ($) {
         const updateRes = yield* updateSyngentaOracle(lucid, {
-            // Note: runtime expects `syngentaOracleData` here
-            syngentaOracleData: newData,
+            farmIdToUpdate: "1234567890",
+            newSyngentaOracleData: newData,
             scripts: {
                 syngentaOracleMinting: deployed.scripts.syngentaOracleMinting,
                 syngentaOracleSpending: deployed.scripts.syngentaOracleSpending as unknown as SpendingValidator,

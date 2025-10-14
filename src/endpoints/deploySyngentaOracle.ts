@@ -18,8 +18,9 @@ import {
   validatorToAddress,
   validatorToScriptHash,
   WithdrawalValidator,
+  fromText,
 } from "@lucid-evolution/lucid";
-import { DeploySyngentaOracleConfig, SYNGENTA_ORACLE_TOKEN_NAME, DeploySyngentaOracleResult, SyngentaOracleData, SyngentaOracleSignature, UpdateSyngentaOracleConfig, UpdateSyngentaOracleResult } from "../core/index.js";
+import { DeploySyngentaOracleConfig, DeploySyngentaOracleResult, SyngentaOracleData, SyngentaOracleSignature, UpdateSyngentaOracleConfig, UpdateSyngentaOracleResult } from "../core/index.js";
 import { Effect } from "effect";
 
 
@@ -69,13 +70,6 @@ export const deploySyngentaOracle = (
       script: syngentaOracleScript,
     };
     const syngentaOraclePolicyId = mintingPolicyToId(syngentaOracleMinting);
-
-    const alwaysFails: SpendingValidator = {
-      type: "PlutusV3",
-      script: applyParamsToScript(config.scripts.alwaysFails, [55n]),
-    };
-
-    const syngentaOracleNFT = toUnit(syngentaOraclePolicyId, SYNGENTA_ORACLE_TOKEN_NAME)
    
     const syngentaOracleSpending : SpendingValidator = {
       type: "PlutusV3",
@@ -99,6 +93,8 @@ export const deploySyngentaOracle = (
     }
 
     const paramDatum = Data.to<Data>(syngentaOracleDatum)
+    const syngentaOracleNFT = toUnit(syngentaOraclePolicyId, fromText(farmId))
+
     const mintedAssets : Assets = { [syngentaOracleNFT]: 1n }
     
     const tx = yield* lucid
@@ -137,7 +133,7 @@ export const deploySyngentaOracle = (
         
       const syngentaOraclePolicyId : PolicyId = mintingPolicyToId(config.scripts.syngentaOracleMinting);
   
-      const syngentaOracleNFT = toUnit(syngentaOraclePolicyId, SYNGENTA_ORACLE_TOKEN_NAME)
+      const syngentaOracleNFT = toUnit(syngentaOraclePolicyId, fromText(config.farmIdToUpdate))
      
       const syngentaOracleSpending : SpendingValidator = config.scripts.syngentaOracleSpending
       
@@ -153,7 +149,7 @@ export const deploySyngentaOracle = (
       //   , sustainabilityIndex:: Integer            -- 0..100
       //   , additionalData     :: BuiltinData        -- BuiltinData blob
       //   }
-      const {farmerId, farmId, aeId, farmArea, farmBorders, sustainabilityIndex, additionalData} : SyngentaOracleData = config.syngentaOracleData;
+      const {farmerId, farmId, aeId, farmArea, farmBorders, sustainabilityIndex, additionalData} : SyngentaOracleData = config.newSyngentaOracleData;
       const syngentaOracleDatum = [farmerId, farmId, aeId, BigInt(farmArea), farmBorders, BigInt(sustainabilityIndex), additionalData]
   
       const paramDatum = Data.to<Data>(syngentaOracleDatum)
