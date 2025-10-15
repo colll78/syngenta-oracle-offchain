@@ -195,8 +195,11 @@ const config = {
     additionalData: Data.void(),
   },
   scripts: {
-    syngentaOracleMinting: deployedScripts.syngentaOracleMinting, // From deploySyngentaOracle result
-    syngentaOracleSpending: deployedScripts.syngentaOracleSpending, // From deploySyngentaOracle result
+    // These scripts are produced by deploySyngentaOracle, and will remain constant forever from that point onwards. 
+    // So someone should use the deployment to deploy a single farmer and save the returned scripts to disk.
+    // All update transactions will use the same scripts as returned by the original deploy transaction. 
+    syngentaOracleMinting: deployedScripts.syngentaOracleMinting, // From any invocation of deploySyngentaOracle result
+    syngentaOracleSpending: deployedScripts.syngentaOracleSpending, // From any invocation deploySyngentaOracle result
   }
 } as const;
 
