@@ -48,14 +48,13 @@ import type { SyngentaOracleData, SyngentaOracleSignature, DeploySyngentaOracleC
   - `signedOracleMessage: { signature: string; key: string }`
 
 - `DeploySyngentaOracleConfig`:
-  - `initSyngentaOracleUTxO: UTxO`
   - `syngentaOracleData: SyngentaOracleData`
-  - `scripts: { syngentaOracleMinting: string; syngentaOracleSpending: string; alwaysFails: string }` // CBOR hex
+  - `scripts: { syngentaOracleMinting: string; syngentaOracleSpending: string;}` // CBOR hex
 
 - `DeploySyngentaOracleResult`:
   - `tx: TxSignBuilder`
   - `syngentaOraclePolicyId: PolicyId`
-  - `scripts: { syngentaOracleMinting: MintingPolicy; syngentaOracleSpending: WithdrawalValidator }`
+  - `scripts: { syngentaOracleMinting: MintingPolicy; syngentaOracleSpending: SpendingValidator }`
 
 - `UpdateSyngentaOracleConfig`:
   - `farmIdToUpdate: string`
@@ -138,7 +137,6 @@ import { Effect } from "effect";
 import { deploySyngentaOracle } from "syngenta-oracle-offchain";
 
 const config = {
-  initSyngentaOracleUTxO: /* a UTxO containing the init funds */,
   syngentaOracleData: {
     farmerId: "farmer-123",
     farmId: "farm-456",

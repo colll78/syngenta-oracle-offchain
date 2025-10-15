@@ -67,7 +67,6 @@ export type Deploy = {
 };
 
 export type DeploySyngentaOracleConfig = {
-  initSyngentaOracleUTxO: UTxO;
   syngentaOracleData: SyngentaOracleData;
   scripts: {
     syngentaOracleMinting : CborHex;
@@ -75,6 +74,17 @@ export type DeploySyngentaOracleConfig = {
     alwaysFails: CborHex;
   }
 };
+
+export type BatchDeploySyngentaOracleConfig = {
+  syngentaOracleData: SyngentaOracleData;
+  scripts: {
+    syngentaOracleMinting : CborHex;
+    syngentaOracleSpending: CborHex;
+    alwaysFails: CborHex;
+  }
+};
+
+
 
 export type DeploySyngentaOracleResult = {
   tx: TxSignBuilder;

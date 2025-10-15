@@ -27,7 +27,6 @@ test<LucidContext>("Test 1 - Deploy Syngenta Oracle", async () => {
     }
 
     const paramConfig : DeploySyngentaOracleConfig = {
-        initSyngentaOracleUTxO: initSyngentaOracleUTxO,
         syngentaOracleData: syngentaOracleData,
         scripts: {
             syngentaOracleMinting: syngentaOracleMintingBytes,
@@ -119,7 +118,6 @@ test<LucidContext>("Test 3 - Update Syngenta Oracle (Emulator)", async () => {
 
     // Deploy the oracle in the emulator first
     const deployConfig : DeploySyngentaOracleConfig = {
-        initSyngentaOracleUTxO: initSyngentaOracleUTxO,
         syngentaOracleData: initialData,
         scripts: {
             syngentaOracleMinting: syngentaOracleMintingBytes,

@@ -1,5 +1,5 @@
 import * as _lucid_evolution_lucid from '@lucid-evolution/lucid';
-import { Data, Credential, Constr, ScriptHash, KeyHash, SignedMessage, OutRef, Assets, TxSignBuilder, UTxO, PolicyId, MintingPolicy, WithdrawalValidator, SpendingValidator, Address, LucidEvolution, Network, Unit, Redeemer, TransactionError } from '@lucid-evolution/lucid';
+import { Data, Credential, Constr, ScriptHash, KeyHash, SignedMessage, OutRef, Assets, TxSignBuilder, PolicyId, MintingPolicy, WithdrawalValidator, SpendingValidator, UTxO, Address, LucidEvolution, Network, Unit, Redeemer, TransactionError } from '@lucid-evolution/lucid';
 export * from '@lucid-evolution/lucid';
 import { Effect } from 'effect';
 
@@ -112,7 +112,14 @@ type Deploy = {
     syngentaOraclePolicyId: string;
 };
 type DeploySyngentaOracleConfig = {
-    initSyngentaOracleUTxO: UTxO;
+    syngentaOracleData: SyngentaOracleData;
+    scripts: {
+        syngentaOracleMinting: CborHex;
+        syngentaOracleSpending: CborHex;
+        alwaysFails: CborHex;
+    };
+};
+type BatchDeploySyngentaOracleConfig = {
     syngentaOracleData: SyngentaOracleData;
     scripts: {
         syngentaOracleMinting: CborHex;
@@ -229,4 +236,4 @@ declare const getSignedOracleMessage: (lucid: LucidEvolution, config: SyngentaOr
 declare const deploySyngentaOracle: (lucid: LucidEvolution, config: DeploySyngentaOracleConfig) => Effect.Effect<DeploySyngentaOracleResult, TransactionError, never>;
 declare const updateSyngentaOracle: (lucid: LucidEvolution, config: UpdateSyngentaOracleConfig) => Effect.Effect<UpdateSyngentaOracleResult, TransactionError, never>;
 
-export { ADA, AddressD, AddressSchema, AssetClassD, AssetClassSchema, CborHex, CredentialD, CredentialSchema, Deploy, DeploySyngentaOracleConfig, DeploySyngentaOracleResult, DirectoryNodeDatum, DirectoryNodeDatumSchema, Either, MakeTransferRedeemerParams, MultiValidator, ONE_HOUR_MS, ONE_YEAR_MS, OutputReference, OutputReferenceSchema, POSIXTime, PROTOCOL_FEE, PROTOCOL_PAYMENT_KEY, PROTOCOL_STAKE_KEY, ProtocolParametersDatum, ProtocolParametersDatumSchema, REF_SCRIPT_TOKEN_NAMES, RawHex, ReadableUTxO, Result, SYNGENTA_ORACLE_TOKEN_NAME, SyngentaOracleData, SyngentaOracleSignature, TIME_TOLERANCE_MS, TWENTY_FOUR_HOURS_MS, TWO_YEARS_MS, UTxOSelectionCriteria, UpdateSyngentaOracleConfig, UpdateSyngentaOracleResult, Value, ValueSchema, chunkArray, deploySyngentaOracle, divCeil, filterForeignPoliciesFromAssets, filterPolicyFromAssets, fromAddress, fromAddressToData, fromAssets, generateAccountSeedPhrase, getInputUtxoIndices, getMultiValidator, getSignedOracleMessage, keyHashToCredentialData, makeFreezeRedeemer, makeTransferRedeemer, mintingMetadataFromAsset, ok, parseSafeDatum, parseUTxOsAtScript, removeAssets, replacer, scriptHashToCredentialData, selectUtxos, sortByOutRefWithIndex, sortUtxosByOutRef, sumUtxoAssets, toAddress, toAssets, toCBORHex, toCredentialData, union, updateSyngentaOracle, utxosAtAddressWithPolicyId, utxosAtScript };
+export { ADA, AddressD, AddressSchema, AssetClassD, AssetClassSchema, BatchDeploySyngentaOracleConfig, CborHex, CredentialD, CredentialSchema, Deploy, DeploySyngentaOracleConfig, DeploySyngentaOracleResult, DirectoryNodeDatum, DirectoryNodeDatumSchema, Either, MakeTransferRedeemerParams, MultiValidator, ONE_HOUR_MS, ONE_YEAR_MS, OutputReference, OutputReferenceSchema, POSIXTime, PROTOCOL_FEE, PROTOCOL_PAYMENT_KEY, PROTOCOL_STAKE_KEY, ProtocolParametersDatum, ProtocolParametersDatumSchema, REF_SCRIPT_TOKEN_NAMES, RawHex, ReadableUTxO, Result, SYNGENTA_ORACLE_TOKEN_NAME, SyngentaOracleData, SyngentaOracleSignature, TIME_TOLERANCE_MS, TWENTY_FOUR_HOURS_MS, TWO_YEARS_MS, UTxOSelectionCriteria, UpdateSyngentaOracleConfig, UpdateSyngentaOracleResult, Value, ValueSchema, chunkArray, deploySyngentaOracle, divCeil, filterForeignPoliciesFromAssets, filterPolicyFromAssets, fromAddress, fromAddressToData, fromAssets, generateAccountSeedPhrase, getInputUtxoIndices, getMultiValidator, getSignedOracleMessage, keyHashToCredentialData, makeFreezeRedeemer, makeTransferRedeemer, mintingMetadataFromAsset, ok, parseSafeDatum, parseUTxOsAtScript, removeAssets, replacer, scriptHashToCredentialData, selectUtxos, sortByOutRefWithIndex, sortUtxosByOutRef, sumUtxoAssets, toAddress, toAssets, toCBORHex, toCredentialData, union, updateSyngentaOracle, utxosAtAddressWithPolicyId, utxosAtScript };

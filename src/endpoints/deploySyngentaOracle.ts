@@ -61,8 +61,6 @@ export const deploySyngentaOracle = (
         throw new Error("Payment credential is undefined");
     }
     
-    const initProtocolParamsOutRef = new Constr(0, [String(config.initSyngentaOracleUTxO.txHash), BigInt(config.initSyngentaOracleUTxO.outputIndex)]);
-
     const syngentaOracleScript = applyParamsToScript(config.scripts.syngentaOracleMinting, [paymentCredential.hash])
 
     const syngentaOracleMinting: MintingPolicy = {
@@ -76,6 +74,8 @@ export const deploySyngentaOracle = (
       script: syngentaOracleScript
     }
     const syngentaOracleSpendingAddr = validatorToAddress(network!, syngentaOracleSpending)
+
+    // Syngenta Oracle Datum structure:
     // data SyngentaOracleData = SyngentaOracleData
     //   { farmerId           :: BuiltinByteString
     //   , farmId             :: BuiltinByteString
@@ -99,7 +99,6 @@ export const deploySyngentaOracle = (
     
     const tx = yield* lucid
       .newTx()
-      .collectFrom([config.initSyngentaOracleUTxO])
       .pay.ToContract(syngentaOracleSpendingAddr, {
         kind: "inline",
         value: paramDatum,
