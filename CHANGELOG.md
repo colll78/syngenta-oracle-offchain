@@ -11,7 +11,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
   - Accepts `syngentaOracleData` and required scripts; builds a transaction that collects the current oracle UTxO and re-locks it with updated inline datum.
 - Added: Emulator test for update flow in `test/deploy-script.test.ts` ("Test 3 - Update Syngenta Oracle (Emulator)").
 
-Notes:
-- The runtime config for the update uses the key `syngentaOracleData`. Types may be aligned in `src/core/types.ts` in a follow-up.
-
+- Added: `batchDeploySyngentaOracle` endpoint to deploy multiple oracle feeds for different farms in a single transaction. 
+  - Implementation lives in `src/endpoints/deploySyngentaOracle.ts` and is exported via `src/endpoints/index.ts` and `src/index.ts`.
+- Added: Emulator test for batch deployment flow in `test/deploy-script.test.ts` ("Test 4").
 
