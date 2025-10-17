@@ -71,20 +71,8 @@ export type DeploySyngentaOracleConfig = {
   scripts: {
     syngentaOracleMinting : CborHex;
     syngentaOracleSpending: CborHex;
-    alwaysFails: CborHex;
   }
 };
-
-export type BatchDeploySyngentaOracleConfig = {
-  syngentaOracleData: SyngentaOracleData;
-  scripts: {
-    syngentaOracleMinting : CborHex;
-    syngentaOracleSpending: CborHex;
-    alwaysFails: CborHex;
-  }
-};
-
-
 
 export type DeploySyngentaOracleResult = {
   tx: TxSignBuilder;
@@ -92,6 +80,23 @@ export type DeploySyngentaOracleResult = {
   scripts: {
     syngentaOracleMinting : MintingPolicy;
     syngentaOracleSpending: WithdrawalValidator;
+  }
+};
+
+export type BatchDeploySyngentaOracleConfig = {
+  batchSyngentaOracleData: SyngentaOracleData[];
+  scripts: {
+    syngentaOracleMinting : CborHex;
+    syngentaOracleSpending: CborHex;
+  }
+};
+
+export type BatchDeploySyngentaOracleResult = {
+  tx: TxSignBuilder;
+  syngentaOraclePolicyId: PolicyId;
+  scripts: {
+    syngentaOracleMinting : MintingPolicy;
+    syngentaOracleSpending: SpendingValidator;
   }
 };
 

@@ -20,7 +20,7 @@ import {
   WithdrawalValidator,
   fromText,
 } from "@lucid-evolution/lucid";
-import { DeploySyngentaOracleConfig, DeploySyngentaOracleResult, SyngentaOracleData, SyngentaOracleSignature, UpdateSyngentaOracleConfig, UpdateSyngentaOracleResult } from "../core/index.js";
+import { BatchDeploySyngentaOracleConfig, BatchDeploySyngentaOracleResult, DeploySyngentaOracleConfig, DeploySyngentaOracleResult, SyngentaOracleData, SyngentaOracleSignature, UpdateSyngentaOracleConfig, UpdateSyngentaOracleResult } from "../core/index.js";
 import { Effect } from "effect";
 
 
@@ -170,4 +170,72 @@ export const deploySyngentaOracle = (
       return {tx: tx};
     });
 
+export const batchDeploySyngentaOracle = (
+lucid: LucidEvolution,
+config: BatchDeploySyngentaOracleConfig,
+): Effect.Effect<BatchDeploySyngentaOracleResult, TransactionError, never> =>
+Effect.gen(function* () {
+  const network = lucid.config().network;
+  const userAddress: Address = yield* Effect.promise(() =>
+    lucid.wallet().address()
+  );
+
+  const { paymentCredential } = getAddressDetails(userAddress);
+  if (!paymentCredential) {
+      throw new Error("Payment credential is undefined");
+  }
+  
+  const syngentaOracleScript = applyParamsToScript(config.scripts.syngentaOracleMinting, [paymentCredential.hash])
+
+  const syngentaOracleMinting: MintingPolicy = {
+    type: "PlutusV3",
+    script: syngentaOracleScript,
+  };
+  const syngentaOraclePolicyId = mintingPolicyToId(syngentaOracleMinting);
+
+  const syngentaOracleSpending : SpendingValidator = {
+    type: "PlutusV3",
+    script: syngentaOracleScript
+  }
+  const syngentaOracleSpendingAddr = validatorToAddress(network!, syngentaOracleSpending)
+
+  const scripts = { 
+    syngentaOracleMinting: syngentaOracleMinting,
+    syngentaOracleSpending: syngentaOracleSpending
+  }
+
+  // Prepare minted assets and contract payments for all oracles
+  let mintedAssets: Assets = {};
+  let txBuilder = lucid.newTx();
+
+  // Process each oracle data
+  for (const oracleData of config.batchSyngentaOracleData) {
+    const {farmerId, farmId, aeId, farmArea, farmBorders, sustainabilityIndex, additionalData} = oracleData;
     
+    // Create unique NFT for this farm
+    const syngentaOracleNFT = toUnit(syngentaOraclePolicyId, fromText(farmId));
+    
+    // Add to minted assets
+    mintedAssets[syngentaOracleNFT] = 1n;
+    
+    // Create datum for this oracle
+    const syngentaOracleDatum = [farmerId, farmId, aeId, BigInt(farmArea), farmBorders, BigInt(sustainabilityIndex), additionalData];
+    const paramDatum = Data.to<Data>(syngentaOracleDatum);
+    
+    // Add contract payment for this oracle
+    txBuilder = txBuilder.pay.ToContract(syngentaOracleSpendingAddr, {
+      kind: "inline",
+      value: paramDatum,
+    }, {
+      [syngentaOracleNFT]: 1n,
+    });
+  }
+  
+  const tx = yield* txBuilder
+    .mintAssets(mintedAssets, Data.void())
+    .attach.MintingPolicy(syngentaOracleMinting)
+    .addSignerKey(paymentCredential.hash)
+    .completeProgram();
+  
+  return {tx: tx, syngentaOraclePolicyId: syngentaOraclePolicyId, scripts};
+});

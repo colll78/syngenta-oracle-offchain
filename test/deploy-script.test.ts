@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { Effect } from "effect";
 import { LucidContext, makeBlockfrostContext, makeEmulatorContext } from "./service/lucidContext.js";
-import { Address, Credential, applyParamsToScript, deploySyngentaOracle, updateSyngentaOracle, MintingPolicy, paymentCredentialOf, PolicyId, SpendingValidator, UTxO, Constr, validatorToScriptHash, ScriptHash, DeploySyngentaOracleResult, DeploySyngentaOracleConfig, SyngentaOracleData, Data, getSignedOracleMessage, SyngentaOracleSignature } from "../src/index.js";
+import { Address, Credential, applyParamsToScript, deploySyngentaOracle, updateSyngentaOracle, MintingPolicy, paymentCredentialOf, PolicyId, SpendingValidator, UTxO, Constr, validatorToScriptHash, ScriptHash, DeploySyngentaOracleResult, DeploySyngentaOracleConfig, SyngentaOracleData, Data, getSignedOracleMessage, SyngentaOracleSignature, BatchDeploySyngentaOracleResult, batchDeploySyngentaOracle, BatchDeploySyngentaOracleConfig, fromText } from "../src/index.js";
 import { alwaysFailsBytes, syngentaOracleMintingBytes, syngentaOracleSpendingBytes } from "./common/constants.js";
 
 /*
@@ -31,7 +31,6 @@ test<LucidContext>("Test 1 - Deploy Syngenta Oracle", async () => {
         scripts: {
             syngentaOracleMinting: syngentaOracleMintingBytes,
             syngentaOracleSpending: syngentaOracleSpendingBytes,
-            alwaysFails: alwaysFailsBytes
         }
     }
     const deploySyngentaOracleProgram = Effect.gen(function* ($) {
@@ -122,7 +121,6 @@ test<LucidContext>("Test 3 - Update Syngenta Oracle (Emulator)", async () => {
         scripts: {
             syngentaOracleMinting: syngentaOracleMintingBytes,
             syngentaOracleSpending: syngentaOracleSpendingBytes,
-            alwaysFails: alwaysFailsBytes
         }
     };
 
@@ -192,4 +190,61 @@ test<LucidContext>("Test 3 - Update Syngenta Oracle (Emulator)", async () => {
 
     const updated = await Effect.runPromise(updateProgram);
     expect(updated.tx).toBeDefined();
+});
+
+/*
+Test 4 - Batch Deploy Syngenta Oracle
+- Deploy multiple Syngenta Oracle feeds in a single transaction.
+- Each oracle gets a unique NFT based on its farmId.
+*/
+test<LucidContext>("Test 4 - Batch Deploy Syngenta Oracle", async () => {
+    const  { lucid, users, emulator } = await Effect.runPromise(makeEmulatorContext());
+    lucid.selectWallet.fromSeed(users.operatorAccount1.seedPhrase);
+    const operatorAccount1Address: Address = await lucid.wallet().address();
+    console.log("Operator Account 1 Address: " + operatorAccount1Address);
+
+    // Prepare 50 oracle data entries
+    const batchSyngentaOracleData: SyngentaOracleData[] = Array.from({ length: 50 }, (_, index) => ({
+        farmerId: fromText(`farmer${String(index + 1)}`),
+        farmId: fromText(`farm${String(index + 1)}`),
+        aeId: fromText(`ae${String(index + 1)}`),
+        sustainabilityIndex: 95,
+        additionalData: Data.void(),
+        farmArea: 150,
+        farmBorders: fromText(`borders${String(index + 1)}`),
+    }));
+
+    const batchConfig: BatchDeploySyngentaOracleConfig = {
+        batchSyngentaOracleData: batchSyngentaOracleData,
+        scripts: {
+            syngentaOracleMinting: syngentaOracleMintingBytes,
+            syngentaOracleSpending: syngentaOracleSpendingBytes,
+        }
+    };
+
+    const batchDeployProgram = Effect.gen(function* ($) {
+        const batchResult: BatchDeploySyngentaOracleResult = yield* batchDeploySyngentaOracle(lucid, batchConfig);
+        const batchTx = batchResult.tx;
+        const batchTxSigned = yield* Effect.promise(() =>
+            batchTx.sign.withWallet().complete()
+        );
+        const batchTxHash = yield* Effect.promise(() =>
+            batchTxSigned.submit()
+        );
+        if (emulator) {
+            yield* Effect.promise(() =>
+                emulator.awaitTx(batchTxHash)
+            );
+        } else {
+            yield* Effect.promise(() =>
+                lucid.awaitTx(batchTxHash)
+            );
+        }
+        console.log("Batch deployed syngenta oracles with tx hash: " + batchTxHash);
+        return batchResult;
+    });
+
+    const batchResult = await Effect.runPromise(batchDeployProgram);
+    expect(batchResult).toBeDefined();
+    console.log(`Successfully batch deployed ${batchSyngentaOracleData.length} syngenta oracles`);
 });
